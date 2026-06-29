@@ -1,0 +1,39 @@
+# ── PHAST pipeline requirements ────────────────────────────────────────────
+# Derived from the actual imports across stage1-8 notebooks + code/*.py.
+# `google.colab` is NOT listed — it's mocked at runtime by phast_bootstrap.py.
+
+# --- core scientific stack (used by nearly every stage) ---
+numpy
+scipy
+pandas
+matplotlib
+
+# --- astronomy / data ingestion (stages 1, 5) ---
+lightkurve            # TESS light-curve download from MAST
+astropy               # units, time, tables (pulled in by lightkurve too)
+astroquery            # catalog / archive queries
+
+# --- detrending & period search (stages 1, 2) ---
+celerite2             # Gaussian-process detrending
+transitleastsquares   # TLS period search
+
+# --- machine learning (stage 4) ---
+# CPU build by default (works everywhere). For an NVIDIA GPU, install the CUDA
+# wheel instead, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+torch
+
+# --- parameter estimation & reporting (stages 7, 8) ---
+batman-package        # imported as `batman` — Mandel-Agol transit model
+emcee                 # MCMC sampler (CPU-bound; a GPU does NOT speed this up)
+corner                # posterior corner plots
+tqdm                  # progress bars
+
+# --- needed to RUN the notebooks locally / in VSCode (not imported by them) ---
+jupyter
+ipykernel
+nbformat
+nbconvert
+
+setuptools==69.5.1
+numba>=0.59
