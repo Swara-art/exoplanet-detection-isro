@@ -1,6 +1,6 @@
 """
 dashboard.py  —  PHAST Pipeline Dashboard
-Run with: streamlit run dashboard.py
+Run with: .venv\Scripts\streamlit.exe run dashboard/dashboard.py
 """
 
 import os
@@ -640,6 +640,11 @@ with st.sidebar:
         # Prepend a blank sentinel so the dashboard starts empty
         options = ["— select a run —"] + runs
 
+        active_run_tag_state = st.session_state.get("active_run_tag")
+        if active_run_tag_state and active_run_tag_state != st.session_state.get("last_synced_run_tag"):
+            st.session_state["run_selectbox"] = active_run_tag_state
+            st.session_state["last_synced_run_tag"] = active_run_tag_state
+
         active_run_tag = st.session_state.get("active_run_tag")
         if active_run_tag and active_run_tag in runs:
             default_idx = options.index(active_run_tag)
@@ -713,6 +718,7 @@ if run_btn:
     }
     if rc == 0:
         st.session_state["active_run_tag"] = run_tag_completed
+        st.session_state["last_synced_run_tag"] = None
     st.rerun()
 
 

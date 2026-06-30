@@ -246,13 +246,31 @@ def _remap(p):
     return p
 
 if not getattr(builtins, "_phast_patched", False):
-    _open, _mkdirs = builtins.open, os.makedirs
-    _exists, _isdir, _listdir = os.path.exists, os.path.isdir, os.listdir
+    import io
+    _open, _io_open, _mkdirs = builtins.open, io.open, os.makedirs
+    _exists, _isdir, _isfile, _listdir = os.path.exists, os.path.isdir, os.path.isfile, os.listdir
+    _stat = os.stat
     builtins.open      = lambda f, *a, **k: _open(_remap(f), *a, **k)
+    io.open            = lambda f, *a, **k: _io_open(_remap(f), *a, **k)
     os.makedirs        = lambda n, *a, **k: _mkdirs(_remap(n), *a, **k)
-    os.path.exists     = lambda p: _exists(_remap(p))
-    os.path.isdir      = lambda p: _isdir(_remap(p))
-    os.listdir         = lambda p=".": _listdir(_remap(p))
+    os.path.exists     = lambda p, *a, **k: _exists(_remap(p), *a, **k)
+    os.path.isdir      = lambda p, *a, **k: _isdir(_remap(p), *a, **k)
+    os.path.isfile     = lambda p, *a, **k: _isfile(_remap(p), *a, **k)
+    os.listdir         = lambda p=".", *a, **k: _listdir(_remap(p), *a, **k)
+    os.stat            = lambda p, *a, **k: _stat(_remap(p), *a, **k)
+    try:
+        import IPython.core.interactiveshell
+        IPython.core.interactiveshell.io_open = io.open
+    except Exception:
+        pass
+    try:
+        import torch
+        _torch_save = torch.save
+        _torch_load = torch.load
+        torch.save = lambda obj, f, *a, **k: _torch_save(obj, _remap(f), *a, **k)
+        torch.load = lambda f, *a, **k: _torch_load(_remap(f), *a, **k)
+    except Exception:
+        pass
     builtins._phast_patched = True
 
 # Put code/ on the path so `import stage1_preprocessing` works

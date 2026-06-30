@@ -48,14 +48,34 @@ def _remap(path):
 # --- patch the file/dir functions the notebooks actually use -----------------
 # Guard with a flag so re-running the bootstrap cell doesn't double-wrap.
 if not getattr(builtins, "_phast_patched", False):
-    _open, _makedirs = builtins.open, os.makedirs
-    _exists, _listdir, _isdir = os.path.exists, os.listdir, os.path.isdir
+    import io
+    _open, _io_open, _makedirs = builtins.open, io.open, os.makedirs
+    _exists, _listdir, _isdir, _isfile = os.path.exists, os.listdir, os.path.isdir, os.path.isfile
+    _stat = os.stat
 
     builtins.open      = lambda file, *a, **k: _open(_remap(file), *a, **k)
+    io.open            = lambda file, *a, **k: _io_open(_remap(file), *a, **k)
     os.makedirs        = lambda name, *a, **k: _makedirs(_remap(name), *a, **k)
-    os.path.exists     = lambda p: _exists(_remap(p))
-    os.path.isdir      = lambda p: _isdir(_remap(p))
-    os.listdir         = lambda p=".": _listdir(_remap(p))
+    os.path.exists     = lambda p, *a, **k: _exists(_remap(p), *a, **k)
+    os.path.isdir      = lambda p, *a, **k: _isdir(_remap(p), *a, **k)
+    os.path.isfile     = lambda p, *a, **k: _isfile(_remap(p), *a, **k)
+    os.listdir         = lambda p=".", *a, **k: _listdir(_remap(p), *a, **k)
+    os.stat            = lambda p, *a, **k: _stat(_remap(p), *a, **k)
+
+    try:
+        import IPython.core.interactiveshell
+        IPython.core.interactiveshell.io_open = io.open
+    except Exception:
+        pass
+
+    try:
+        import torch
+        _torch_save = torch.save
+        _torch_load = torch.load
+        torch.save = lambda obj, f, *a, **k: _torch_save(obj, _remap(f), *a, **k)
+        torch.load = lambda f, *a, **k: _torch_load(_remap(f), *a, **k)
+    except Exception:
+        pass
 
     builtins._phast_patched = True
 
