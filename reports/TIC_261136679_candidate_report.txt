@@ -2,19 +2,19 @@
 PHAST PIPELINE v2.0 — CANDIDATE REPORT
 Physics-Hardcoded Anomaly and Signal Taxonomy
 ISRO Bharatiya Antariksh Hackathon
-Generated: 2026-06-29 14:52:34
+Generated: 2026-06-29 20:39:05
 ========================================================================
 
 TIC ID                    : 261136679
-Classification            : ECLIPSING BINARY CANDIDATE
-Reason                    : Secondary eclipse or odd/even depth mismatch detected.
+Classification            : HIGH-CONFIDENCE PLANET
+Reason                    : Passes all primary physics checks with no EB indicators. Ω = 0.898 ≥ 0.80, centroid clear, blend risk low.
 
 ------------------------------------------------------------------------
 SCORE SUMMARY
 ------------------------------------------------------------------------
-Oddity Score Ω            : 0.839
+Oddity Score Ω            : 0.898
 Autoencoder Score Â       : 1.000  (weight: 0.60)
-Physics Score P̂           : 0.597  (weight: 0.40)
+Physics Score P̂           : 0.745  (weight: 0.40)
 Planet Probability        : 1.000
 Bayesian FPP              : 0.000
 Weighting Mode            : QUIET_STAR_AUTOENCODER_PRIORITY
@@ -22,8 +22,8 @@ Weighting Mode            : QUIET_STAR_AUTOENCODER_PRIORITY
 ------------------------------------------------------------------------
 PHYSICS VALIDATION
 ------------------------------------------------------------------------
-Physics Rules Passed      : 13/17
-Failed Rules              : limb_darkening, v_shape, secondary_eclipse, difference_image
+Physics Rules Passed      : 15/17
+Failed Rules              : limb_darkening, difference_image
 Centroid Shift            : 0.0115 pixels
 Blend Risk                : LOW (flag: LOW)
 Autoencoder Reliable      : True
@@ -36,10 +36,10 @@ Orbital Period            : 6.26709 ± 0.01509 days
 Transit Epoch (T0)        : 0.20952
 Transit Depth             : 0.0293%
 Transit Duration          : 2.994 hours
-Radius Ratio (Rp/Rs)      : 0.03032 +0.00195/-0.00198
-Scaled Semi-Major Axis    : 16.7649 +0.9448/-0.9119
-Inclination               : 86.105 +0.292/-0.369 deg
-Impact Parameter (b)      : 1.1388
+Radius Ratio (Rp/Rs)      : 0.01702 +0.00171/-0.00210
+Scaled Semi-Major Axis    : 23.1981 +7.3395/-6.5201
+Inclination               : 87.530 +0.595/-0.967 deg
+Impact Parameter (b)      : 0.9997
 Transit Count (TLS)       : 5
 TLS SNR                   : 41.53
 
@@ -48,7 +48,7 @@ MODEL FIT QUALITY
 ------------------------------------------------------------------------
 Reduced Chi²              : 2.250
 RMSE                      : 0.00013350
-MCMC Acceptance Fraction  : 0.613
+MCMC Acceptance Fraction  : 0.088
 
 ------------------------------------------------------------------------
 PLANET-LIKE STRENGTHS
@@ -56,7 +56,9 @@ PLANET-LIKE STRENGTHS
   ✓ transit_depth
   ✓ duration_ratio
   ✓ symmetry
+  ✓ v_shape
   ✓ dilution
+  ✓ secondary_eclipse
   ✓ ellipsoidal
   ✓ rotation
   ✓ eta
@@ -67,12 +69,10 @@ PLANET-LIKE STRENGTHS
 ------------------------------------------------------------------------
 POTENTIAL CONCERNS
 ------------------------------------------------------------------------
-  ⚠ v_shape
-  ⚠ secondary_eclipse
   ⚠ difference_image
 
 ========================================================================
 RECOMMENDED ACTION
 ========================================================================
-  Reject as planet. Catalogue as eclipsing binary for further study.
+  Recommend telescope follow-up for radial velocity confirmation.
 ========================================================================

@@ -1,3 +1,6 @@
 *.venv
 *__pycache__
-*code
+reports
+checkpoints
+plots
+

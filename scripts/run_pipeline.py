@@ -21,7 +21,9 @@ so you never re-download TESS data you already have.
 
 import asyncio
 import argparse
+import json
 import os
+import subprocess as _sp
 import sys
 import time
 import nbformat
@@ -32,6 +34,46 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Prefer the repo's .venv Python so pipeline always uses installed packages,
+# regardless of which Python launched the dashboard or this script.
+def _venv_python() -> str:
+    candidates = [
+        os.path.join(REPO_ROOT, ".venv", "Scripts", "python.exe"),  # Windows
+        os.path.join(REPO_ROOT, ".venv", "bin", "python"),          # macOS/Linux
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            return p
+    return sys.executable  # fallback: whatever is currently running
+
+PYTHON_EXE = _venv_python()
+
+
+def ensure_venv_kernel() -> str:
+    """Register the venv Python as a Jupyter kernel and return its name.
+    Falls back to 'python3' if registration fails."""
+    kernel_name = "phast_venv"
+    try:
+        r = _sp.run(
+            [PYTHON_EXE, "-m", "jupyter", "kernelspec", "list", "--json"],
+            capture_output=True, text=True, timeout=30
+        )
+        if r.returncode == 0:
+            specs = json.loads(r.stdout).get("kernelspecs", {})
+            if kernel_name in specs:
+                return kernel_name
+        _sp.run(
+            [PYTHON_EXE, "-m", "ipykernel", "install",
+             "--user", "--name", kernel_name, "--display-name", "PHAST (.venv)"],
+            check=True, capture_output=True, timeout=60
+        )
+        print(f"[pipeline] registered kernel '{kernel_name}' → {PYTHON_EXE}", flush=True)
+        return kernel_name
+    except Exception as exc:
+        print(f"[pipeline] kernel registration failed ({exc}), falling back to 'python3'", flush=True)
+        return "python3"
+
 
 STAGE_NOTEBOOKS = {
     1: "notebooks/stage1_preprocessing.ipynb",
@@ -60,6 +102,92 @@ def ensure_folders(run_tag: str):
         "models",
     ]:
         os.makedirs(os.path.join(REPO_ROOT, folder), exist_ok=True)
+
+
+def _load_pkl(run_tag: str, stage: int):
+    p = os.path.join(REPO_ROOT, "data", run_tag, f"stage{stage}_output.pkl")
+    if not os.path.exists(p):
+        return None
+    try:
+        import pickle
+        with open(p, "rb") as f:
+            return pickle.load(f)
+    except Exception:
+        return None
+
+
+def _write_fallback_pkl(run_tag: str, stage: int, tic_id: int, sector: int, reason: str):
+    """Write a stage-specific fallback pkl with safe defaults so Stage 8 can still run."""
+    import pickle
+    import math
+    p = os.path.join(REPO_ROOT, "data", run_tag, f"stage{stage}_output.pkl")
+
+    base = {"status": "insufficient_data", "tic_id": tic_id, "sector": sector, "reason": reason}
+
+    stage_defaults = {
+        3: {
+            "decision": "PASS",
+            "flags": {},
+            "metrics": {},
+            "rejection_reasons": [],
+            "warning_reasons": [f"Insufficient data: {reason}"],
+        },
+        4: {
+            "autoencoder_score": 0.0,
+            "anomaly_score": 0.0,
+            "reconstruction_error": 0.0,
+            "threshold": 0.0,
+            "is_anomaly": False,
+            "reliable": False,
+        },
+        5: {
+            "physics_score": 0.0,
+            "planet_probability": 0.0,
+            "bayesian_fpp": 1.0,
+            "approx_fpp": 1.0,
+            "confidence": 0.0,
+            "physics_metrics": {},
+            "weights": {},
+            "strengths": [],
+            "concerns": [f"Insufficient data: {reason}"],
+            "blend_risk_flag": "UNKNOWN",
+            "centroid_shift": math.nan,
+            "centroid_score": 0.5,
+            "pixel_score": 0.5,
+            "tpf_available": False,
+        },
+        6: {
+            "oddity_score": 0.0,
+            "classification": "INSUFFICIENT DATA",
+            "recommendation": "Acquire additional sectors before analysis.",
+            "priority": "LOW",
+            "priority_score": 0.0,
+            "weighting": {"mode": "default", "autoencoder_weight": 0.5, "physics_weight": 0.5},
+            "input_scores": {"autoencoder_score": 0.0, "physics_only_score": 0.0},
+            "adaptive_context": {
+                "blend_risk_level": "LOW",
+                "variability_class": "QUIET",
+                "autoencoder_reliable": False,
+            },
+            "warnings": [f"Insufficient data: {reason}"],
+        },
+        7: {
+            "rp_rs": 0.0, "rp_rs_lower": 0.0, "rp_rs_upper": 0.0,
+            "a_rs": 0.0, "a_rs_lower": 0.0, "a_rs_upper": 0.0,
+            "inclination": 90.0, "inclination_lower": 0.0, "inclination_upper": 0.0,
+            "impact_parameter": 0.0,
+            "transit_depth": 0.0,
+            "reduced_chi2": 0.0,
+            "rmse": 0.0,
+            "acceptance_fraction": 0.0,
+            "priority_score": 0.0,
+        },
+    }
+
+    payload = {**base, **stage_defaults.get(stage, {})}
+    with open(p, "wb") as f:
+        pickle.dump(payload, f)
+    print(f"  [fallback] Wrote insufficient-data placeholder for stage {stage}.", flush=True)
 
 
 def build_bootstrap_cell(tic_id: int, sector: int, run_tag: str) -> str:
@@ -98,6 +226,9 @@ def _remap(p):
     try: p = os.fspath(p)
     except TypeError: return p
     if not isinstance(p, str): return p
+    # Normalize to forward slashes — Windows os.path.join produces backslashes
+    # which break startswith comparisons against the forward-slash COLAB_PREFIX.
+    p = p.replace("\\\\", "/")
     if p.startswith(COLAB_PREFIX + "/data"):
         return p.replace(COLAB_PREFIX + "/data", RUN_ROOT)
     if p.startswith(COLAB_PREFIX + "/checkpoints"):
@@ -158,7 +289,8 @@ print(f"[pipeline] data   : {{DATA_DIR}}")
 """
 
 
-def run_notebook(stage_num: int, nb_path: str, bootstrap_src: str, timeout: int):
+def run_notebook(stage_num: int, nb_path: str, bootstrap_src: str, timeout: int,
+                 kernel_name: str = "python3"):
     abs_path = os.path.join(REPO_ROOT, nb_path)
     print("=" * 80, flush=True)
     print(f"RUNNING STAGE {stage_num}: {os.path.basename(nb_path)}", flush=True)
@@ -170,10 +302,20 @@ def run_notebook(stage_num: int, nb_path: str, bootstrap_src: str, timeout: int)
 
     nb = nbformat.read(abs_path, as_version=4)
 
+    # Neutralize any bare PIPELINE_CONFIG = { ... } cells in the notebook.
+    # The bootstrap cell (injected below) already provides the correct config;
+    # if we let the notebook's own cell run it overwrites the target with the
+    # hardcoded TIC ID that was used during development.
+    for cell in nb.cells:
+        src = "".join(cell.get("source", []))
+        stripped = src.lstrip()
+        if stripped.startswith("PIPELINE_CONFIG") and "=" in stripped.split("\n")[0]:
+            cell["source"] = "# PIPELINE_CONFIG defined by run_pipeline.py bootstrap — skipped here\n"
+
     # Inject the bootstrap as the first cell (in memory only — never saved back)
     nb.cells.insert(0, nbformat.v4.new_code_cell(source=bootstrap_src))
 
-    ep = ExecutePreprocessor(timeout=timeout, kernel_name="python3")
+    ep = ExecutePreprocessor(timeout=timeout, kernel_name=kernel_name)
     notebook_dir = os.path.dirname(abs_path)
 
     env = os.environ.copy()
@@ -233,6 +375,7 @@ def main():
     run_tag = make_run_tag(args.tic, args.sector)
     ensure_folders(run_tag)
 
+    kernel_name = ensure_venv_kernel()
     bootstrap = build_bootstrap_cell(args.tic, args.sector, run_tag)
 
     if args.stage:
@@ -244,16 +387,47 @@ def main():
     print(f"Output folder  : data/{run_tag}/")
     print(f"Stages to run  : {stages}\n")
 
+    insufficient_data_reason = None
+
     for s in stages:
+        # After stage 2 completes, check whether there are enough transits to
+        # proceed.  If not, write fallback pkls for all remaining stages and
+        # jump straight to stage 8 so it can emit an "insufficient data" report.
+        if s == 3 and insufficient_data_reason is None:
+            s2 = _load_pkl(run_tag, 2)
+            if s2 is not None:
+                dtc = s2.get("distinct_transit_count", 99)
+                sde = s2.get("sde", 99)
+                if dtc < 2 or sde < 5:
+                    insufficient_data_reason = (
+                        f"Only {dtc} distinct transit(s) detected "
+                        f"(SDE={sde:.2f}). Insufficient data for full analysis."
+                    )
+                    print(f"\n[pipeline] {insufficient_data_reason}", flush=True)
+
+        if insufficient_data_reason and s in (3, 4, 5, 6, 7):
+            _write_fallback_pkl(run_tag, s, args.tic, args.sector, insufficient_data_reason)
+            continue
+
         try:
-            run_notebook(s, STAGE_NOTEBOOKS[s], bootstrap, args.timeout)
-        except Exception:
-            print("Pipeline aborted.", flush=True)
-            sys.exit(1)
+            run_notebook(s, STAGE_NOTEBOOKS[s], bootstrap, args.timeout, kernel_name)
+        except Exception as exc:
+            # Stages 1-2 are critical — abort if they fail.
+            if s <= 2:
+                print("Pipeline aborted.", flush=True)
+                sys.exit(1)
+            # Stages 3-7: write a fallback and keep going so stage 8 can report.
+            reason = str(exc).split("\n")[0][:200]
+            _write_fallback_pkl(run_tag, s, args.tic, args.sector, reason)
+            if insufficient_data_reason is None:
+                insufficient_data_reason = reason
 
     print("=" * 80)
     print(f"ALL STAGES COMPLETE — TIC {args.tic}  sector {args.sector}")
-    print(f"Report: reports/{run_tag}_report.*")
+    print(f"Report : reports/TIC_{args.tic}_candidate_report.txt")
+    print(f"Plots  : reports/TIC_{args.tic}_stage8_dashboard.png")
+    print(f"         reports/TIC_{args.tic}_orbital_parameters.png")
+    print(f"         reports/TIC_{args.tic}_physics_table.png")
     print("=" * 80)
 
 
