@@ -1,0 +1,79 @@
+========================================================================
+PHAST PIPELINE v2.0 — CANDIDATE REPORT
+Physics-Hardcoded Anomaly and Signal Taxonomy
+ISRO Bharatiya Antariksh Hackathon
+Generated: 2026-06-30 12:34:20
+========================================================================
+
+TIC ID                    : 299798795
+Classification            : ECLIPSING BINARY CANDIDATE
+Reason                    : One EB indicator present and Oddity Score below the planet threshold.
+
+------------------------------------------------------------------------
+SCORE SUMMARY
+------------------------------------------------------------------------
+Oddity Score Ω            : 0.750
+Autoencoder Score Â       : 1.000  (weight: 0.60)
+Physics Score P̂           : 0.591  (weight: 0.40)
+Planet Probability        : 1.000
+Bayesian FPP              : 0.000
+Weighting Mode            : QUIET_STAR_AUTOENCODER_PRIORITY
+
+------------------------------------------------------------------------
+PHYSICS VALIDATION
+------------------------------------------------------------------------
+Physics Rules Passed      : 13/17
+Failed Rules              : limb_darkening, v_shape, odd_even, ttv
+Centroid Shift            : 0.0023 pixels
+Blend Risk                : LOW (flag: LOW)
+Autoencoder Reliable      : True
+Variability Class         : QUIET
+
+------------------------------------------------------------------------
+ORBITAL PARAMETERS (BATMAN + MCMC)
+------------------------------------------------------------------------
+Orbital Period            : 3.69285 ± 0.00882 days
+Transit Epoch (T0)        : 0.92904
+Transit Depth             : 0.1729%
+Transit Duration          : 9.127 hours
+Radius Ratio (Rp/Rs)      : 0.03352 +0.00189/-0.00193
+Scaled Semi-Major Axis    : 35.5933 +20.4508/-12.0389
+Inclination               : 88.398 +0.587/-0.828 deg
+Impact Parameter (b)      : 0.9951
+Transit Count (TLS)       : 8
+TLS SNR                   : 41.85
+
+------------------------------------------------------------------------
+MODEL FIT QUALITY
+------------------------------------------------------------------------
+Reduced Chi²              : 0.996
+RMSE                      : 0.00066173
+MCMC Acceptance Fraction  : 0.141
+
+------------------------------------------------------------------------
+PLANET-LIKE STRENGTHS
+------------------------------------------------------------------------
+  ✓ transit_depth
+  ✓ duration_ratio
+  ✓ dilution
+  ✓ secondary_eclipse
+  ✓ ellipsoidal
+  ✓ rotation
+  ✓ autoencoder_anomaly
+  ✓ autoencoder_reliability
+  ✓ autoencoder_significance
+  ✓ autoencoder_confidence
+
+------------------------------------------------------------------------
+POTENTIAL CONCERNS
+------------------------------------------------------------------------
+  ⚠ limb_darkening
+  ⚠ v_shape
+  ⚠ odd_even
+  ⚠ ttv
+
+========================================================================
+RECOMMENDED ACTION
+========================================================================
+  Reject as planet. Catalogue as eclipsing binary for further study.
+========================================================================

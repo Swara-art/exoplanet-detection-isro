@@ -1,0 +1,78 @@
+========================================================================
+PHAST PIPELINE v2.0 — CANDIDATE REPORT
+Physics-Hardcoded Anomaly and Signal Taxonomy
+ISRO Bharatiya Antariksh Hackathon
+Generated: 2026-06-30 12:12:58
+========================================================================
+
+TIC ID                    : 266980320
+Classification            : HIGH-CONFIDENCE PLANET
+Reason                    : Passes all primary physics checks with no EB indicators. Ω = 0.920 ≥ 0.80, centroid clear, blend risk low.
+
+------------------------------------------------------------------------
+SCORE SUMMARY
+------------------------------------------------------------------------
+Oddity Score Ω            : 0.920
+Autoencoder Score Â       : 1.000  (weight: 0.60)
+Physics Score P̂           : 0.800  (weight: 0.40)
+Planet Probability        : 1.000
+Bayesian FPP              : 0.000
+Weighting Mode            : QUIET_STAR_AUTOENCODER_PRIORITY
+
+------------------------------------------------------------------------
+PHYSICS VALIDATION
+------------------------------------------------------------------------
+Physics Rules Passed      : 15/17
+Failed Rules              : symmetry, limb_darkening
+Centroid Shift            : 0.0010 pixels
+Blend Risk                : LOW (flag: LOW)
+Autoencoder Reliable      : True
+Variability Class         : QUIET
+
+------------------------------------------------------------------------
+ORBITAL PARAMETERS (BATMAN + MCMC)
+------------------------------------------------------------------------
+Orbital Period            : 6.03303 ± 0.01816 days
+Transit Epoch (T0)        : 3.90695
+Transit Depth             : 0.1729%
+Transit Duration          : 1.922 hours
+Radius Ratio (Rp/Rs)      : 0.03352 +0.00189/-0.00193
+Scaled Semi-Major Axis    : 35.5933 +20.4508/-12.0389
+Inclination               : 88.398 +0.587/-0.828 deg
+Impact Parameter (b)      : 0.9951
+Transit Count (TLS)       : 4
+TLS SNR                   : 33.23
+
+------------------------------------------------------------------------
+MODEL FIT QUALITY
+------------------------------------------------------------------------
+Reduced Chi²              : 0.996
+RMSE                      : 0.00066173
+MCMC Acceptance Fraction  : 0.141
+
+------------------------------------------------------------------------
+PLANET-LIKE STRENGTHS
+------------------------------------------------------------------------
+  ✓ transit_depth
+  ✓ duration_ratio
+  ✓ dilution
+  ✓ odd_even
+  ✓ secondary_eclipse
+  ✓ ttv
+  ✓ ellipsoidal
+  ✓ rotation
+  ✓ eta
+  ✓ autoencoder_anomaly
+  ✓ autoencoder_reliability
+  ✓ autoencoder_confidence
+
+------------------------------------------------------------------------
+POTENTIAL CONCERNS
+------------------------------------------------------------------------
+  ⚠ limb_darkening
+
+========================================================================
+RECOMMENDED ACTION
+========================================================================
+  Recommend telescope follow-up for radial velocity confirmation.
+========================================================================
